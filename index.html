@@ -74,11 +74,9 @@
       <option value="Lainnya">Lainnya</option>
     </select>
     <select id="statusFilter">
-      <option value="">Semua Status Isi</option>
-      <option value="Penuh">Penuh</option>
-      <option value="Sedang Digunakan">Sedang Digunakan</option>
-      <option value="Kosong">Kosong</option>
-      <option value="Uji Hidrostatik / Perawatan">Uji Hidrostatik / Perawatan</option>
+      <option value="">Semua Status</option>
+      <option value="Isian">Isian</option>
+      <option value="Kosongan">Kosongan</option>
     </select>
     <button class="btn btn-outline" id="resetFiltersBtn" type="button">Reset</button>
   </div>
@@ -93,7 +91,7 @@
           <th>Lokasi</th>
           <th>Pelanggan / Stasiun Pengisian / Rak</th>
           <th>Status Isi</th>
-          <th>Uji Hidrostatik / Cek Terakhir</th>
+          <th>Tanggal Pengiriman</th>
           <th>Diperbarui Oleh</th>
           <th>Aksi</th>
         </tr>
@@ -152,15 +150,13 @@
           <input type="text" id="capacity" placeholder="cth. 6 m³ / 40L" />
         </div>
         <div class="form-group">
-          <label for="status">Status Isi / Katup</label>
+          <label for="status">Status Isi / Kosong</label>
           <select id="status">
-            <option value="Penuh">Penuh</option>
-            <option value="Sedang Digunakan">Sedang Digunakan</option>
-            <option value="Kosong">Kosong</option>
-            <option value="Uji Hidrostatik / Perawatan">Uji Hidrostatik / Perawatan</option>
+            <option value="Isian">Isian</option>
+            <option value="Kosongan">Kosongan</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="locationGroup">
           <label for="location">Lokasi Saat Ini *</label>
           <select id="location" required>
             <option value="Di Gudang">Di Gudang</option>
@@ -168,12 +164,12 @@
             <option value="Di Stasiun Pengisian">Di Stasiun Pengisian</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="client_or_station">Nama Pelanggan / Stasiun Pengisian / Rak</label>
+        <div class="form-group" id="clientStationGroup" style="display:none;">
+          <label for="client_or_station" id="clientStationLabel">Nama Pelanggan / Stasiun Pengisian / Rak</label>
           <input type="text" id="client_or_station" placeholder="cth. PT Mitra Baja / Stasiun Pengisian Utama" />
         </div>
         <div class="form-group full">
-          <label for="last_inspection">Tanggal Uji Hidrostatik / Pemeriksaan Terakhir</label>
+          <label for="last_inspection">Tanggal Pengiriman</label>
           <input type="date" id="last_inspection" />
         </div>
         <div class="form-group full">

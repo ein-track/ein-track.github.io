@@ -18,6 +18,11 @@ function getGoogleClientId() {
   return GOOGLE_CLIENT_ID.trim();
 }
 
+function isWarehouseLocation(loc) {
+  const v = String(loc || "").trim().toLowerCase();
+  return v === "di gudang" || v === "in warehouse";
+}
+
 function getAuthSession() {
   try {
     const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
@@ -93,6 +98,34 @@ function updateStatusBadges(syncOk = true) {
     authToggleBtn.textContent = "Masuk dengan Google";
     authToggleBtn.className = "btn btn-success";
     readonlyBanner.classList.remove("hidden");
+  }
+}
+
+/* Sembunyikan & kosongkan kolom Pelanggan/Stasiun saat lokasi Di Gudang */
+function syncClientStationFieldVisibility() {
+  const loc = document.getElementById("location").value;
+  const locationGroup = document.getElementById("locationGroup");
+  const clientGroup = document.getElementById("clientStationGroup");
+  const clientLabel = document.getElementById("clientStationLabel");
+  const clientInput = document.getElementById("client_or_station");
+
+  if (isWarehouseLocation(loc)) {
+    clientInput.value = "";
+    clientGroup.style.display = "none";
+    locationGroup.classList.add("full");
+  } else {
+    clientGroup.style.display = "flex";
+    locationGroup.classList.remove("full");
+    if (loc === "Di Pelanggan") {
+      clientLabel.textContent = "Nama Pelanggan";
+      clientInput.placeholder = "cth. PT Mitra Baja";
+    } else if (loc === "Di Stasiun Pengisian") {
+      clientLabel.textContent = "Nama Stasiun Pengisian";
+      clientInput.placeholder = "cth. Stasiun Pengisian Utama";
+    } else {
+      clientLabel.textContent = "Nama Pelanggan / Stasiun Pengisian / Rak";
+      clientInput.placeholder = "cth. PT Mitra Baja / Stasiun Pengisian Utama";
+    }
   }
 }
 
@@ -264,7 +297,7 @@ async function refreshData() {
 function renderView() {
   document.getElementById("statTotal").textContent = allCylinders.length;
   document.getElementById("statWarehouse").textContent = allCylinders.filter(
-    c => c.location === "Di Gudang" || c.location === "In Warehouse"
+    c => isWarehouseLocation(c.location)
   ).length;
   document.getElementById("statClients").textContent = allCylinders.filter(
     c => c.location === "Di Pelanggan" || c.location === "In Clients"
@@ -289,7 +322,7 @@ function renderView() {
           item.gas_type,
           item.capacity,
           item.location,
-          item.client_or_station,
+          isWarehouseLocation(item.location) ? "" : item.client_or_station,
           item.status,
           item.notes,
           item.updated_by
@@ -315,13 +348,14 @@ function renderView() {
     const noteHtml = item.notes ? `<div class="note-subtext">${esc(item.notes)}</div>` : "";
     const editorName = item.updated_by ? esc(item.updated_by) : "-";
     const updatedTime = item.updated_at ? `<div class="audit-time">${esc(item.updated_at)}</div>` : "";
+    const clientDisplay = isWarehouseLocation(item.location) ? "-" : esc(item.client_or_station || "-");
     return `
       <tr>
         <td><span class="cyl-code">${esc(item.cylinder_number)}</span></td>
         <td><strong>${esc(item.gas_type)}</strong>${noteHtml}</td>
         <td>${esc(item.capacity || "-")}</td>
         <td><span class="badge ${esc(locClass)}">${esc(item.location)}</span></td>
-        <td>${esc(item.client_or_station || "-")}</td>
+        <td>${clientDisplay}</td>
         <td><span class="status-tag">${esc(item.status || "-")}</span></td>
         <td>${esc(item.last_inspection || "-")}</td>
         <td class="audit-cell">${editorName}${updatedTime}</td>
@@ -349,16 +383,20 @@ function openCylinderModal(item) {
       document.getElementById("cylinder_number").value = item.cylinder_number || "";
       document.getElementById("gas_type").value = item.gas_type || "Oksigen (O2)";
       document.getElementById("capacity").value = item.capacity || "";
-      document.getElementById("status").value = item.status || "Penuh";
+      document.getElementById("status").value = item.status || "Isian";
       document.getElementById("location").value = item.location || "Di Gudang";
-      document.getElementById("client_or_station").value = item.client_or_station || "";
+      document.getElementById("client_or_station").value = isWarehouseLocation(item.location)
+        ? ""
+        : (item.client_or_station || "");
       document.getElementById("last_inspection").value = item.last_inspection || "";
       document.getElementById("notes").value = item.notes || "";
     } else {
       document.getElementById("modalTitle").textContent = "Tambah Tabung Gas";
       document.getElementById("cylinderForm").reset();
       document.getElementById("cylinderId").value = "";
+      document.getElementById("location").value = "Di Gudang";
     }
+    syncClientStationFieldVisibility();
     document.getElementById("formModal").classList.add("open");
   });
 }
@@ -412,7 +450,11 @@ function exportCsv() {
 
   const lines = [headers.join(",")];
   allCylinders.forEach(item => {
-    lines.push(headers.map(h => escapeCell(item[h])).join(","));
+    const rowObj = {
+      ...item,
+      client_or_station: isWarehouseLocation(item.location) ? "" : item.client_or_station
+    };
+    lines.push(headers.map(h => escapeCell(rowObj[h])).join(","));
   });
 
   const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
@@ -476,6 +518,8 @@ function parseCsv(text) {
 }
 
 /* Event Bindings */
+document.getElementById("location").addEventListener("change", syncClientStationFieldVisibility);
+
 document.getElementById("authToggleBtn").addEventListener("click", () => {
   if (isAuthorized()) {
     signOutSession();
@@ -519,14 +563,19 @@ document.getElementById("cylinderForm").addEventListener("submit", async (e) => 
     return;
   }
 
+  const locationVal = document.getElementById("location").value;
+  const clientVal = isWarehouseLocation(locationVal)
+    ? ""
+    : document.getElementById("client_or_station").value.trim();
+
   const record = {
     id: idVal ? Number(idVal) : 0,
     cylinder_number: cylNum,
     gas_type: gasType,
     capacity: document.getElementById("capacity").value.trim(),
     status: document.getElementById("status").value,
-    location: document.getElementById("location").value,
-    client_or_station: document.getElementById("client_or_station").value.trim(),
+    location: locationVal,
+    client_or_station: clientVal,
     last_inspection: document.getElementById("last_inspection").value,
     notes: document.getElementById("notes").value.trim()
   };
@@ -615,13 +664,14 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
         const gas_type = (r[gasIdx] || "").trim();
         if (!cylinder_number || !gas_type) continue;
 
+        const locVal = getCol(r, "location", "Di Gudang") || "Di Gudang";
         parsedRecords.push({
           cylinder_number,
           gas_type,
           capacity: getCol(r, "capacity", ""),
-          status: getCol(r, "status", "Penuh") || "Penuh",
-          location: getCol(r, "location", "Di Gudang") || "Di Gudang",
-          client_or_station: getCol(r, "client_or_station", ""),
+          status: getCol(r, "status", "Isian") || "Isian",
+          location: locVal,
+          client_or_station: isWarehouseLocation(locVal) ? "" : getCol(r, "client_or_station", ""),
           last_inspection: getCol(r, "last_inspection", ""),
           notes: getCol(r, "notes", "")
         });
@@ -662,5 +712,4 @@ document.getElementById("resetFiltersBtn").addEventListener("click", () => {
   renderView();
 });
 
-// Muat data awal
 refreshData();
