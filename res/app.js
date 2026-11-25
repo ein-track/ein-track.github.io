@@ -82,9 +82,15 @@ function updateStatusBadges(syncOk = true) {
   }
 
   const session = getAuthSession();
+  const loggedIn = Boolean(session);
   const authPill = document.getElementById("authPill");
   const authToggleBtn = document.getElementById("authToggleBtn");
   const readonlyBanner = document.getElementById("readonlyBanner");
+
+  // Tampilkan atau sembunyikan elemen khusus editor (+ Tambah Tabung, Impor CSV)
+  document.querySelectorAll(".auth-only").forEach(el => {
+    el.style.display = loggedIn ? "inline-flex" : "none";
+  });
 
   if (session) {
     authPill.textContent = `Masuk: ${session.email}`;
@@ -127,6 +133,48 @@ function syncClientStationFieldVisibility() {
       clientInput.placeholder = "cth. PT Mitra Baja / Stasiun Pengisian Utama";
     }
   }
+}
+
+/* Riwayat 3 Pengeditan Terakhir */
+function parseEditHistory(raw) {
+  if (Array.isArray(raw)) return raw.slice(0, 3);
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+  } catch {
+    return [];
+  }
+}
+
+function openHistoryModal(item) {
+  document.getElementById("historyModalTitle").textContent = `Riwayat: ${item.cylinder_number}`;
+  const listEl = document.getElementById("historyList");
+  const entries = parseEditHistory(item.edit_history);
+
+  if (!entries.length) {
+    const fallback = item.updated_at
+      ? `<div class="history-item">
+           <div class="history-item-head">
+             <strong>${esc(item.updated_by || "-")}</strong>
+             <span>${esc(item.updated_at)}</span>
+           </div>
+           <div class="history-item-summary">Pembaruan terakhir tercatat (detail perubahan sebelumnya belum tersedia).</div>
+         </div>`
+      : `<div class="history-empty">Belum ada riwayat pengeditan tercatat untuk tabung ini.</div>`;
+    listEl.innerHTML = fallback;
+  } else {
+    listEl.innerHTML = entries.map((entry, idx) => `
+      <div class="history-item">
+        <div class="history-item-head">
+          <strong>#${idx + 1} • ${esc(entry.by || "-")}</strong>
+          <span>${esc(entry.at || "-")}</span>
+        </div>
+        <div class="history-item-summary">${esc(entry.summary || "-")}</div>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("historyModal").classList.add("open");
 }
 
 /* Modal Google Identity Services Sign-In */
@@ -205,6 +253,7 @@ async function handleGoogleCredentialResponse(response) {
 
     document.getElementById("authModal").classList.remove("open");
     updateStatusBadges(true);
+    renderView();
     showToast(`Berhasil masuk sebagai ${email}`);
 
     if (pendingAuthAction) {
@@ -242,6 +291,7 @@ function signOutSession() {
     window.google.accounts.id.disableAutoSelect();
   }
   updateStatusBadges(true);
+  renderView();
   showToast("Keluar: Beralih kembali ke Mode Lihat Saja.");
 }
 
@@ -295,6 +345,8 @@ async function refreshData() {
 }
 
 function renderView() {
+  const loggedIn = isAuthorized();
+
   document.getElementById("statTotal").textContent = allCylinders.length;
   document.getElementById("statWarehouse").textContent = allCylinders.filter(
     c => isWarehouseLocation(c.location)
@@ -334,21 +386,29 @@ function renderView() {
     .sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || "") || Number(b.id) - Number(a.id));
 
   const tbody = document.getElementById("cylinderTableBody");
+  const mobileList = document.getElementById("mobileCardList");
   const emptyState = document.getElementById("emptyState");
 
   if (!filtered.length) {
     tbody.innerHTML = "";
+    mobileList.innerHTML = "";
     emptyState.style.display = "block";
     return;
   }
   emptyState.style.display = "none";
 
+  // 1. Render Tabel Desktop
   tbody.innerHTML = filtered.map(item => {
     const locClass = "loc-" + String(item.location || "Di Gudang").replace(/\s+/g, "-");
     const noteHtml = item.notes ? `<div class="note-subtext">${esc(item.notes)}</div>` : "";
     const editorName = item.updated_by ? esc(item.updated_by) : "-";
     const updatedTime = item.updated_at ? `<div class="audit-time">${esc(item.updated_at)}</div>` : "";
     const clientDisplay = isWarehouseLocation(item.location) ? "-" : esc(item.client_or_station || "-");
+    const editDeleteBtns = loggedIn
+      ? `<button class="btn btn-outline btn-sm" type="button" data-edit-id="${esc(item.id)}">Edit</button>
+         <button class="btn btn-danger btn-sm" type="button" data-delete-id="${esc(item.id)}">Hapus</button>`
+      : "";
+
     return `
       <tr>
         <td><span class="cyl-code">${esc(item.cylinder_number)}</span></td>
@@ -361,11 +421,53 @@ function renderView() {
         <td class="audit-cell">${editorName}${updatedTime}</td>
         <td>
           <div class="actions">
-            <button class="btn btn-outline btn-sm" type="button" data-edit-id="${esc(item.id)}">Edit</button>
-            <button class="btn btn-danger btn-sm" type="button" data-delete-id="${esc(item.id)}">Hapus</button>
+            <button class="btn btn-outline btn-sm" type="button" data-history-id="${esc(item.id)}">Riwayat</button>
+            ${editDeleteBtns}
           </div>
         </td>
       </tr>
+    `;
+  }).join("");
+
+  // 2. Render Kartu Mobile
+  mobileList.innerHTML = filtered.map(item => {
+    const locClass = "loc-" + String(item.location || "Di Gudang").replace(/\s+/g, "-");
+    const clientDisplay = isWarehouseLocation(item.location) ? "-" : esc(item.client_or_station || "-");
+    const noteHtml = item.notes
+      ? `<div class="meta-item full"><span class="meta-label">Catatan</span>${esc(item.notes)}</div>`
+      : "";
+    const editDeleteBtns = loggedIn
+      ? `<button class="btn btn-outline btn-sm" type="button" data-edit-id="${esc(item.id)}">Edit</button>
+         <button class="btn btn-danger btn-sm" type="button" data-delete-id="${esc(item.id)}">Hapus</button>`
+      : "";
+
+    return `
+      <div class="cyl-card">
+        <div class="cyl-card-top">
+          <span class="cyl-code">${esc(item.cylinder_number)}</span>
+          <span class="badge ${esc(locClass)}">${esc(item.location)}</span>
+        </div>
+        <div class="cyl-card-title">${esc(item.gas_type)} ${item.capacity ? `• ${esc(item.capacity)}` : ""}</div>
+        <div class="cyl-card-meta">
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <strong>${esc(item.status || "-")}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Tgl Pengiriman</span>
+            ${esc(item.last_inspection || "-")}
+          </div>
+          <div class="meta-item full">
+            <span class="meta-label">Pelanggan / Stasiun / Rak</span>
+            ${clientDisplay}
+          </div>
+          ${noteHtml}
+        </div>
+        <div class="cyl-card-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-history-id="${esc(item.id)}">Riwayat</button>
+          ${editDeleteBtns}
+        </div>
+      </div>
     `;
   }).join("");
 }
@@ -520,6 +622,13 @@ function parseCsv(text) {
 /* Event Bindings */
 document.getElementById("location").addEventListener("change", syncClientStationFieldVisibility);
 
+document.getElementById("toggleFiltersBtn").addEventListener("click", () => {
+  const panel = document.getElementById("filterControls");
+  const btn = document.getElementById("toggleFiltersBtn");
+  const isOpen = panel.classList.toggle("open");
+  btn.textContent = isOpen ? "Filter ▴" : "Filter ▾";
+});
+
 document.getElementById("authToggleBtn").addEventListener("click", () => {
   if (isAuthorized()) {
     signOutSession();
@@ -533,6 +642,10 @@ document.getElementById("bannerUnlockBtn").addEventListener("click", () => openA
 document.getElementById("authCancelBtn").addEventListener("click", () => {
   document.getElementById("authModal").classList.remove("open");
   pendingAuthAction = null;
+});
+
+document.getElementById("historyCloseBtn").addEventListener("click", () => {
+  document.getElementById("historyModal").classList.remove("open");
 });
 
 document.getElementById("addBtn").addEventListener("click", () => openCylinderModal(null));
@@ -610,7 +723,13 @@ document.getElementById("cylinderForm").addEventListener("submit", async (e) => 
   }
 });
 
-document.getElementById("cylinderTableBody").addEventListener("click", (e) => {
+function handleTableOrCardAction(e) {
+  const historyId = e.target.getAttribute("data-history-id");
+  if (historyId) {
+    const item = allCylinders.find(c => Number(c.id) === Number(historyId));
+    if (item) openHistoryModal(item);
+    return;
+  }
   const editId = e.target.getAttribute("data-edit-id");
   if (editId) {
     const item = allCylinders.find(c => Number(c.id) === Number(editId));
@@ -621,7 +740,10 @@ document.getElementById("cylinderTableBody").addEventListener("click", (e) => {
   if (deleteId) {
     deleteCylinderById(deleteId);
   }
-});
+}
+
+document.getElementById("cylinderTableBody").addEventListener("click", handleTableOrCardAction);
+document.getElementById("mobileCardList").addEventListener("click", handleTableOrCardAction);
 
 document.getElementById("refreshBtn").addEventListener("click", refreshData);
 document.getElementById("exportBtn").addEventListener("click", exportCsv);

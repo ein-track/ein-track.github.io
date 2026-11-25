@@ -10,28 +10,31 @@
 <body>
 
 <header>
-  <div>
-    <h1>Energi Indogas Nusantara</h1>
-    <div class="subtitle-row">
-      <span class="subtitle">Lacak tabung berdasarkan nomor tabung</span>
-      <span id="syncPill" class="pill sync-cloud">Tersinkronisasi Google Sheet</span>
-      <span id="authPill" class="pill auth-locked">Mode Lihat Saja</span>
+  <div class="brand-header">
+    <img src="./res/ein_logo.png" alt="Energi Indogas Nusantara Logo" class="brand-logo" />
+    <div>
+      <h1>Energi Indogas Nusantara</h1>
+      <div class="subtitle-row">
+        <span class="subtitle">Lacak tabung berdasarkan nomor tabung</span>
+        <span id="syncPill" class="pill sync-cloud">Tersinkronisasi Google Sheet</span>
+        <span id="authPill" class="pill auth-locked">Mode Lihat Saja</span>
+      </div>
     </div>
   </div>
   <div class="header-actions">
     <button id="authToggleBtn" class="btn btn-success" type="button">Masuk dengan Google</button>
     <button id="refreshBtn" class="btn btn-dark-outline" type="button">Segarkan</button>
     <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none" />
-    <button id="importBtn" class="btn btn-dark-outline" type="button">Impor CSV</button>
+    <button id="importBtn" class="btn btn-dark-outline auth-only" type="button" style="display:none;">Impor CSV</button>
     <button id="exportBtn" class="btn btn-dark-outline" type="button">Ekspor CSV</button>
-    <button id="addBtn" class="btn btn-primary" type="button">+ Tambah Tabung</button>
+    <button id="addBtn" class="btn btn-primary auth-only" type="button" style="display:none;">+ Tambah Tabung</button>
   </div>
 </header>
 
 <main class="container">
   <div id="readonlyBanner" class="readonly-banner">
     <span>
-      <strong>Mode Lihat Saja:</strong> Siapa saja dapat mencari dan melihat lokasi tabung. Staf berwenang harus masuk dengan Akun Google terdaftar untuk menambah, mengubah, mengimpor, atau menghapus data.
+      <strong>Mode Lihat Saja:</strong> Siapa saja dapat mencari dan melihat lokasi tabung. Staf berwenang harus masuk dengan Akun Google terdaftar untuk mengedit data.
     </span>
     <button id="bannerUnlockBtn" class="btn btn-primary btn-sm" type="button">Masuk untuk Mengedit</button>
   </div>
@@ -56,32 +59,38 @@
   </div>
 
   <div class="toolbar">
-    <input type="text" id="searchInput" placeholder="Pindai atau cari Nomor Tabung, Jenis Gas, Pelanggan, Stasiun, Catatan..." />
-    <select id="locationFilter">
-      <option value="">Semua Lokasi</option>
-      <option value="Di Gudang">Di Gudang</option>
-      <option value="Di Pelanggan">Di Pelanggan</option>
-      <option value="Di Stasiun Pengisian">Di Stasiun Pengisian</option>
-    </select>
-    <select id="gasFilter">
-      <option value="">Semua Jenis Gas</option>
-      <option value="Oksigen (O2)">Oksigen (O2)</option>
-      <option value="Nitrogen (N2)">Nitrogen (N2)</option>
-      <option value="Helium (He)">Helium (He)</option>
-      <option value="Argon (Ar)">Argon (Ar)</option>
-      <option value="Asetilena (C2H2)">Asetilena (C2H2)</option>
-      <option value="Karbon Dioksida (CO2)">Karbon Dioksida (CO2)</option>
-      <option value="Lainnya">Lainnya</option>
-    </select>
-    <select id="statusFilter">
-      <option value="">Semua Status</option>
-      <option value="Isian">Isian</option>
-      <option value="Kosongan">Kosongan</option>
-    </select>
-    <button class="btn btn-outline" id="resetFiltersBtn" type="button">Reset</button>
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Cari Nomor Tabung, Gas, Pelanggan, Rak..." />
+      <button type="button" id="toggleFiltersBtn" class="btn btn-outline mobile-filter-btn">Filter ▾</button>
+    </div>
+    <div id="filterControls" class="filter-controls">
+      <select id="locationFilter">
+        <option value="">Semua Lokasi</option>
+        <option value="Di Gudang">Di Gudang</option>
+        <option value="Di Pelanggan">Di Pelanggan</option>
+        <option value="Di Stasiun Pengisian">Di Stasiun Pengisian</option>
+      </select>
+      <select id="gasFilter">
+        <option value="">Semua Jenis Gas</option>
+        <option value="Oksigen (O2)">Oksigen (O2)</option>
+        <option value="Nitrogen (N2)">Nitrogen (N2)</option>
+        <option value="Helium (He)">Helium (He)</option>
+        <option value="Argon (Ar)">Argon (Ar)</option>
+        <option value="Asetilena (C2H2)">Asetilena (C2H2)</option>
+        <option value="Karbon Dioksida (CO2)">Karbon Dioksida (CO2)</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">Semua Status</option>
+        <option value="Isian">Isian</option>
+        <option value="Kosongan">Kosongan</option>
+      </select>
+      <button class="btn btn-outline" id="resetFiltersBtn" type="button">Reset</button>
+    </div>
   </div>
 
-  <div class="table-wrap">
+  <!-- Tampilan Tabel Desktop -->
+  <div class="table-wrap desktop-table">
     <table>
       <thead>
         <tr>
@@ -98,8 +107,12 @@
       </thead>
       <tbody id="cylinderTableBody"></tbody>
     </table>
-    <div id="emptyState" class="empty-state" style="display:none;">Tidak ada tabung gas yang cocok ditemukan.</div>
   </div>
+
+  <!-- Tampilan Kartu Mobile -->
+  <div id="mobileCardList" class="mobile-card-list"></div>
+
+  <div id="emptyState" class="empty-state" style="display:none;">Tidak ada tabung gas yang cocok ditemukan.</div>
 </main>
 
 <!-- Modal Masuk Staf Berwenang -->
@@ -117,6 +130,18 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-outline" id="authCancelBtn">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Riwayat 3 Pengeditan Terakhir -->
+<div class="modal-backdrop" id="historyModal">
+  <div class="modal modal-sm">
+    <h2 id="historyModalTitle">Riwayat Pengeditan</h2>
+    <p class="help-text">Menampilkan maksimal 3 aktivitas perubahan terakhir untuk tabung ini.</p>
+    <div id="historyList" class="history-list"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" id="historyCloseBtn">Tutup</button>
     </div>
   </div>
 </div>
