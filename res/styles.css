@@ -190,9 +190,11 @@ tr:hover td { background: #f8fafc; }
   font-weight: 600;
 }
 .loc-Di-Gudang, .loc-In-Warehouse { background: var(--warehouse-bg); color: var(--warehouse-text); }
-.loc-Di-Pelanggan, .loc-In-Clients { background: var(--client-bg); color: var(--client-text); }
-.loc-Di-Stasiun-Pengisian, .loc-In-Refill-Station { background: var(--refill-bg); color: var(--refill-text); }
+.loc-Di-Relasi, .loc-Di-Pelanggan, .loc-In-Clients { background: var(--client-bg); color: var(--client-text); }
+.loc-Di-Pengisian, .loc-Di-Stasiun-Pengisian, .loc-In-Refill-Station { background: var(--refill-bg); color: #92400e; }
 .status-tag { font-size: 0.82rem; font-weight: 600; color: #334155; }
+.status-isian { background: #dcfce7; color: #166534; }
+.status-kosongan { background: #fee2e2; color: #991b1b; }
 .actions { display: flex; gap: 6px; flex-wrap: nowrap; }
 .empty-state {
   background: var(--surface);

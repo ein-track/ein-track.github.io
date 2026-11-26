@@ -107,7 +107,7 @@ function updateStatusBadges(syncOk = true) {
   }
 }
 
-/* Sembunyikan & kosongkan kolom Pelanggan/Stasiun saat lokasi Di Gudang */
+/* Sembunyikan & kosongkan kolom Relasi/Stasiun saat lokasi Di Gudang */
 function syncClientStationFieldVisibility() {
   const loc = document.getElementById("location").value;
   const locationGroup = document.getElementById("locationGroup");
@@ -122,15 +122,15 @@ function syncClientStationFieldVisibility() {
   } else {
     clientGroup.style.display = "flex";
     locationGroup.classList.remove("full");
-    if (loc === "Di Pelanggan") {
-      clientLabel.textContent = "Nama Pelanggan";
-      clientInput.placeholder = "cth. PT Mitra Baja";
-    } else if (loc === "Di Stasiun Pengisian") {
-      clientLabel.textContent = "Nama Stasiun Pengisian";
-      clientInput.placeholder = "cth. Stasiun Pengisian Utama";
+    if (loc === "Di Relasi" || loc === "Di Pelanggan") {
+      clientLabel.textContent = "Nama Relasi";
+      clientInput.placeholder = "cth. PT OJI";
+    } else if (loc === "Di Pengisian" || loc === "Di Stasiun Pengisian") {
+      clientLabel.textContent = "Nama Pengisian";
+      clientInput.placeholder = "cth. Pengisian Samator";
     } else {
-      clientLabel.textContent = "Nama Pelanggan / Stasiun Pengisian / Rak";
-      clientInput.placeholder = "cth. PT Mitra Baja / Stasiun Pengisian Utama";
+      clientLabel.textContent = "Nama Relasi / Pengisian / Rak";
+      clientInput.placeholder = "cth. PT OJI / Pengisian Samator";
     }
   }
 }
@@ -351,12 +351,12 @@ function renderView() {
   document.getElementById("statWarehouse").textContent = allCylinders.filter(
     c => isWarehouseLocation(c.location)
   ).length;
-  document.getElementById("statClients").textContent = allCylinders.filter(
-    c => c.location === "Di Pelanggan" || c.location === "In Clients"
-  ).length;
-  document.getElementById("statRefill").textContent = allCylinders.filter(
-    c => c.location === "Di Stasiun Pengisian" || c.location === "In Refill Station"
-  ).length;
+document.getElementById("statClients").textContent = allCylinders.filter(
+  c => c.location === "Di Relasi" || c.location === "Di Pelanggan"
+).length;
+document.getElementById("statRefill").textContent = allCylinders.filter(
+  c => c.location === "Di Pengisian" || c.location === "Di Stasiun Pengisian"
+).length;
 
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const loc = document.getElementById("locationFilter").value;
@@ -390,6 +390,17 @@ function renderView() {
   const emptyState = document.getElementById("emptyState");
   const filledCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "isian").length;
   const emptyCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "kosongan").length;
+  const getStatusBadgeHtml = (status) => {
+    const val = String(status || "").trim();
+    const lower = val.toLowerCase();
+    if (lower === "isian") {
+      return `<span class="badge status-isian">${esc(val)}</span>`;
+    }
+    if (lower === "kosongan") {
+      return `<span class="badge status-kosongan">${esc(val)}</span>`;
+    }
+    return `<span class="status-tag">${esc(val || "-")}</span>`;
+  };
 
   document.getElementById("filteredTotalCount").textContent = filtered.length;
   document.getElementById("allTotalCount").textContent = allCylinders.length;
@@ -423,7 +434,7 @@ function renderView() {
         <td>${esc(item.capacity || "-")}</td>
         <td><span class="badge ${esc(locClass)}">${esc(item.location)}</span></td>
         <td>${clientDisplay}</td>
-        <td><span class="status-tag">${esc(item.status || "-")}</span></td>
+        <td>${getStatusBadgeHtml(item.status)}</td>
         <td>${esc(item.last_inspection || "-")}</td>
         <td class="audit-cell">${editorName}${updatedTime}</td>
         <td>
@@ -458,14 +469,14 @@ function renderView() {
         <div class="cyl-card-meta">
           <div class="meta-item">
             <span class="meta-label">Status</span>
-            <strong>${esc(item.status || "-")}</strong>
+            ${getStatusBadgeHtml(item.status)}
           </div>
           <div class="meta-item">
             <span class="meta-label">Tgl Pengiriman</span>
             ${esc(item.last_inspection || "-")}
           </div>
           <div class="meta-item full">
-            <span class="meta-label">Pelanggan / Stasiun / Rak</span>
+            <span class="meta-label">Relasi / Stasiun / Rak</span>
             ${clientDisplay}
           </div>
           ${noteHtml}
@@ -490,7 +501,7 @@ function openCylinderModal(item) {
       document.getElementById("modalTitle").textContent = "Edit Tabung Gas";
       document.getElementById("cylinderId").value = item.id;
       document.getElementById("cylinder_number").value = item.cylinder_number || "";
-      document.getElementById("gas_type").value = item.gas_type || "Oksigen (O2)";
+      document.getElementById("gas_type").value = item.gas_type || "Oxygen (O2)";
       document.getElementById("capacity").value = item.capacity || "";
       document.getElementById("status").value = item.status || "Isian";
       document.getElementById("location").value = item.location || "Di Gudang";
