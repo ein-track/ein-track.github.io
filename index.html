@@ -49,35 +49,43 @@
       <div class="value" id="statWarehouse">0</div>
     </div>
     <div class="stat-card">
-      <div class="label">Di Pelanggan</div>
+      <div class="label">Di Relasi</div>
       <div class="value" id="statClients">0</div>
     </div>
     <div class="stat-card">
-      <div class="label">Di Stasiun Pengisian</div>
+      <div class="label">Di Pengisian</div>
       <div class="value" id="statRefill">0</div>
     </div>
   </div>
 
   <div class="toolbar">
     <div class="search-row">
-      <input type="text" id="searchInput" placeholder="Cari Nomor Tabung, Gas, Pelanggan, Rak..." />
+      <input type="text" id="searchInput" placeholder="Cari Nomor Tabung, Gas, Relasi, Rak..." />
       <button type="button" id="toggleFiltersBtn" class="btn btn-outline mobile-filter-btn">Filter ▾</button>
     </div>
     <div id="filterControls" class="filter-controls">
       <select id="locationFilter">
         <option value="">Semua Lokasi</option>
         <option value="Di Gudang">Di Gudang</option>
-        <option value="Di Pelanggan">Di Pelanggan</option>
-        <option value="Di Stasiun Pengisian">Di Stasiun Pengisian</option>
+        <option value="Di Relasi">Di Relasi</option>
+        <option value="Di Pengisian">Di Pengisian</option>
       </select>
       <select id="gasFilter">
         <option value="">Semua Jenis Gas</option>
-        <option value="Oksigen (O2)">Oksigen (O2)</option>
+        <option value="Oxygen (O2)">Oxygen (O2)</option>
         <option value="Nitrogen (N2)">Nitrogen (N2)</option>
         <option value="Helium (He)">Helium (He)</option>
+        <option value="Hydrogen (H2)">Hydrogen (H2)</option>
         <option value="Argon (Ar)">Argon (Ar)</option>
-        <option value="Asetilena (C2H2)">Asetilena (C2H2)</option>
-        <option value="Karbon Dioksida (CO2)">Karbon Dioksida (CO2)</option>
+        <option value="Acetylene (C2H2)">Acetylene (C2H2)</option>
+        <option value="Ethylene (C2H4)">Ethylene (C2H4)</option>
+        <option value="Ethane (C2H6)">Ethane (C2H6)</option>
+        <option value="Propane (C3H8)">Propane (C3H8)</option>
+        <option value="Carbon Monoxide (CO)">Carbon Monoxide (CO)</option>
+        <option value="Carbon Dioxide (CO2)">Carbon Dioxide (CO2)</option>
+        <option value="Sulfur Dioxide (SO2)">Sulfur Dioxide (SO2)</option>
+        <option value="Sulfur Hexafluoride (SF6)">Sulfur Hexafluoride (SF6)</option>
+        <option value="Armix">Armix</option>
         <option value="Lainnya">Lainnya</option>
       </select>
       <select id="statusFilter">
@@ -98,7 +106,7 @@
           <th>Jenis Gas</th>
           <th>Kapasitas / Ukuran</th>
           <th>Lokasi</th>
-          <th>Pelanggan / Stasiun Pengisian / Rak</th>
+          <th>Relasi / Pengisian / Rak</th>
           <th>Status Isi</th>
           <th>Tanggal Pengiriman</th>
           <th>Diperbarui Oleh</th>
@@ -161,12 +169,20 @@
         <div class="form-group">
           <label for="gas_type">Jenis Gas *</label>
           <select id="gas_type" required>
-            <option value="Oksigen (O2)">Oksigen (O2)</option>
+            <option value="Oxygen (O2)">Oxygen (O2)</option>
             <option value="Nitrogen (N2)">Nitrogen (N2)</option>
             <option value="Helium (He)">Helium (He)</option>
+            <option value="Hydrogen (H2)">Hydrogen (H2)</option>
             <option value="Argon (Ar)">Argon (Ar)</option>
-            <option value="Asetilena (C2H2)">Asetilena (C2H2)</option>
-            <option value="Karbon Dioksida (CO2)">Karbon Dioksida (CO2)</option>
+            <option value="Acetylene (C2H2)">Acetylene (C2H2)</option>
+            <option value="Ethylene (C2H4)">Ethylene (C2H4)</option>
+            <option value="Ethane (C2H6)">Ethane (C2H6)</option>
+            <option value="Propane (C3H8)">Propane (C3H8)</option>
+            <option value="Carbon Monoxide (CO)">Carbon Monoxide (CO)</option>
+            <option value="Carbon Dioxide (CO2)">Carbon Dioxide (CO2)</option>
+            <option value="Sulfur Dioxide (SO2)">Sulfur Dioxide (SO2)</option>
+            <option value="Sulfur Hexafluoride (SF6)">Sulfur Hexafluoride (SF6)</option>
+            <option value="Armix">Armix</option>
             <option value="Lainnya">Lainnya</option>
           </select>
         </div>
@@ -185,21 +201,21 @@
           <label for="location">Lokasi Saat Ini *</label>
           <select id="location" required>
             <option value="Di Gudang">Di Gudang</option>
-            <option value="Di Pelanggan">Di Pelanggan</option>
-            <option value="Di Stasiun Pengisian">Di Stasiun Pengisian</option>
+            <option value="Di Relasi">Di Relasi</option>
+            <option value="Di Pengisian">Di Pengisian</option>
           </select>
         </div>
         <div class="form-group" id="clientStationGroup" style="display:none;">
-          <label for="client_or_station" id="clientStationLabel">Nama Pelanggan / Stasiun Pengisian / Rak</label>
-          <input type="text" id="client_or_station" placeholder="cth. PT Mitra Baja / Stasiun Pengisian Utama" />
+          <label for="client_or_station" id="clientStationLabel">Nama Relasi / Pengisian / Rak</label>
+          <input type="text" id="client_or_station" placeholder="cth. PT OJI / Pengisian Samator" />
         </div>
         <div class="form-group full">
           <label for="last_inspection">Tanggal Pengiriman</label>
           <input type="date" id="last_inspection" />
         </div>
         <div class="form-group full">
-          <label for="notes">Catatan (Jenis Katup, Kemurnian, No. Surat Jalan)</label>
-          <textarea id="notes" rows="2" placeholder="cth. Kemurnian 99.999% UHP, katup CGA-580, SJ #2026-114"></textarea>
+          <label for="notes">Catatan (Kemurnian, BD dsb.)</label>
+          <textarea id="notes" rows="2" placeholder="cth. Kemurnian 99.999% UHP, Tukar Tabung, BD"></textarea>
         </div>
       </div>
       <div class="modal-footer">
