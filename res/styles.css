@@ -388,3 +388,26 @@ tr:hover td { background: #f8fafc; }
   .form-grid { grid-template-columns: 1fr; }
   .modal-footer .btn { flex: 1; }
 }
+
+.filter-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: -6px 2px 12px;
+  padding: 0 2px;
+}
+.filter-summary strong {
+  color: var(--text);
+}
+.filter-breakdown {
+  font-size: 0.82rem;
+}
+.badge-mini-filled strong {
+  color: #166534;
+}
+.badge-mini-empty strong {
+  color: #92400e;
+}

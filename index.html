@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EIN Cyl Tracker</title>
+  <link rel="icon" type="image/png" href="./res/ein_logo.png" />
+  <link rel="apple-touch-icon" href="./res/ein_logo.png" />
   <link rel="stylesheet" href="./res/styles.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -95,6 +97,15 @@
       </select>
       <button class="btn btn-outline" id="resetFiltersBtn" type="button">Reset</button>
     </div>
+  </div>
+
+  <!-- Ringkasan Total Tabung Terfilter -->
+  <div id="filterSummary" class="filter-summary">
+    Menampilkan <strong id="filteredTotalCount">0</strong> dari <strong id="allTotalCount">0</strong> tabung
+    <span class="filter-breakdown">
+      (<span class="badge-mini-filled">Isian: <strong id="filteredFilledCount">0</strong></span> •
+      <span class="badge-mini-empty">Kosongan: <strong id="filteredEmptyCount">0</strong></span>)
+    </span>
   </div>
 
   <!-- Tampilan Tabel Desktop -->

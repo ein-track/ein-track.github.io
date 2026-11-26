@@ -388,6 +388,13 @@ function renderView() {
   const tbody = document.getElementById("cylinderTableBody");
   const mobileList = document.getElementById("mobileCardList");
   const emptyState = document.getElementById("emptyState");
+  const filledCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "isian").length;
+  const emptyCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "kosongan").length;
+
+  document.getElementById("filteredTotalCount").textContent = filtered.length;
+  document.getElementById("allTotalCount").textContent = allCylinders.length;
+  document.getElementById("filteredFilledCount").textContent = filledCount;
+  document.getElementById("filteredEmptyCount").textContent = emptyCount;
 
   if (!filtered.length) {
     tbody.innerHTML = "";
