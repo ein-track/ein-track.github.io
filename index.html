@@ -66,6 +66,11 @@
       <button type="button" id="toggleFiltersBtn" class="btn btn-outline mobile-filter-btn">Filter ▾</button>
     </div>
     <div id="filterControls" class="filter-controls">
+      <select id="ownershipFilter">
+        <option value="">Semua Kepemilikan</option>
+        <option value="ASET">ASET</option>
+        <option value="MILIK RELASI">MILIK RELASI</option>
+      </select>
       <select id="locationFilter">
         <option value="">Semua Lokasi</option>
         <option value="Di Gudang">Di Gudang</option>
@@ -104,7 +109,9 @@
     Menampilkan <strong id="filteredTotalCount">0</strong> dari <strong id="allTotalCount">0</strong> tabung
     <span class="filter-breakdown">
       (<span class="badge-mini-filled">Isian: <strong id="filteredFilledCount">0</strong></span> •
-      <span class="badge-mini-empty">Kosongan: <strong id="filteredEmptyCount">0</strong></span>)
+      <span class="badge-mini-empty">Kosongan: <strong id="filteredEmptyCount">0</strong></span> •
+      <span class="badge-mini-aset">ASET: <strong id="filteredAsetCount">0</strong></span> •
+      <span class="badge-mini-relasi">MILIK RELASI: <strong id="filteredRelasiCount">0</strong></span>)
     </span>
   </div>
 
@@ -178,6 +185,13 @@
           <input type="text" id="cylinder_number" required placeholder="cth. TBG-O2-00481" />
         </div>
         <div class="form-group">
+          <label for="ownership">Kepemilikan *</label>
+          <select id="ownership" required>
+            <option value="ASET">ASET</option>
+            <option value="MILIK RELASI">MILIK RELASI</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="gas_type">Jenis Gas *</label>
           <select id="gas_type" required>
             <option value="Oxygen (O2)">Oxygen (O2)</option>
@@ -216,7 +230,7 @@
             <option value="Di Pengisian">Di Pengisian</option>
           </select>
         </div>
-        <div class="form-group" id="clientStationGroup" style="display:none;">
+        <div class="form-group full" id="clientStationGroup" style="display:none;">
           <label for="client_or_station" id="clientStationLabel">Nama Relasi / Pengisian / Rak</label>
           <input type="text" id="client_or_station" placeholder="cth. PT OJI / Pengisian Samator" />
         </div>

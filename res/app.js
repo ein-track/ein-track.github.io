@@ -23,6 +23,17 @@ function isWarehouseLocation(loc) {
   return v === "di gudang" || v === "in warehouse";
 }
 
+function normalizeOwnership(val) {
+  const upper = String(val || "").trim().toUpperCase();
+  return upper === "MILIK RELASI" ? "MILIK RELASI" : "ASET";
+}
+
+function getOwnershipBadgeHtml(val) {
+  const own = normalizeOwnership(val);
+  const cls = own === "MILIK RELASI" ? "own-relasi" : "own-aset";
+  return `<span class="own-badge ${cls}">${esc(own)}</span>`;
+}
+
 function getAuthSession() {
   try {
     const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
@@ -351,26 +362,30 @@ function renderView() {
   document.getElementById("statWarehouse").textContent = allCylinders.filter(
     c => isWarehouseLocation(c.location)
   ).length;
-document.getElementById("statClients").textContent = allCylinders.filter(
-  c => c.location === "Di Relasi" || c.location === "Di Pelanggan"
-).length;
-document.getElementById("statRefill").textContent = allCylinders.filter(
-  c => c.location === "Di Pengisian" || c.location === "Di Stasiun Pengisian"
-).length;
+  document.getElementById("statClients").textContent = allCylinders.filter(
+    c => c.location === "Di Relasi" || c.location === "Di Pelanggan"
+  ).length;
+  document.getElementById("statRefill").textContent = allCylinders.filter(
+    c => c.location === "Di Pengisian" || c.location === "Di Stasiun Pengisian"
+  ).length;
 
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const ownFilter = document.getElementById("ownershipFilter").value;
   const loc = document.getElementById("locationFilter").value;
   const gas = document.getElementById("gasFilter").value;
   const st = document.getElementById("statusFilter").value;
 
   const filtered = allCylinders
     .filter(item => {
+      const itemOwn = normalizeOwnership(item.ownership);
+      if (ownFilter && itemOwn !== ownFilter) return false;
       if (loc && item.location !== loc) return false;
       if (gas && item.gas_type !== gas) return false;
       if (st && item.status !== st) return false;
       if (q) {
         const hay = [
           item.cylinder_number,
+          itemOwn,
           item.gas_type,
           item.capacity,
           item.location,
@@ -388,8 +403,12 @@ document.getElementById("statRefill").textContent = allCylinders.filter(
   const tbody = document.getElementById("cylinderTableBody");
   const mobileList = document.getElementById("mobileCardList");
   const emptyState = document.getElementById("emptyState");
+
   const filledCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "isian").length;
   const emptyCount = filtered.filter(c => String(c.status || "").trim().toLowerCase() === "kosongan").length;
+  const asetCount = filtered.filter(c => normalizeOwnership(c.ownership) === "ASET").length;
+  const relasiCount = filtered.filter(c => normalizeOwnership(c.ownership) === "MILIK RELASI").length;
+
   const getStatusBadgeHtml = (status) => {
     const val = String(status || "").trim();
     const lower = val.toLowerCase();
@@ -406,6 +425,8 @@ document.getElementById("statRefill").textContent = allCylinders.filter(
   document.getElementById("allTotalCount").textContent = allCylinders.length;
   document.getElementById("filteredFilledCount").textContent = filledCount;
   document.getElementById("filteredEmptyCount").textContent = emptyCount;
+  document.getElementById("filteredAsetCount").textContent = asetCount;
+  document.getElementById("filteredRelasiCount").textContent = relasiCount;
 
   if (!filtered.length) {
     tbody.innerHTML = "";
@@ -429,7 +450,12 @@ document.getElementById("statRefill").textContent = allCylinders.filter(
 
     return `
       <tr>
-        <td><span class="cyl-code">${esc(item.cylinder_number)}</span></td>
+        <td>
+          <div class="cyl-cell-wrap">
+            <span class="cyl-code">${esc(item.cylinder_number)}</span>
+            ${getOwnershipBadgeHtml(item.ownership)}
+          </div>
+        </td>
         <td><strong>${esc(item.gas_type)}</strong>${noteHtml}</td>
         <td>${esc(item.capacity || "-")}</td>
         <td><span class="badge ${esc(locClass)}">${esc(item.location)}</span></td>
@@ -462,7 +488,10 @@ document.getElementById("statRefill").textContent = allCylinders.filter(
     return `
       <div class="cyl-card">
         <div class="cyl-card-top">
-          <span class="cyl-code">${esc(item.cylinder_number)}</span>
+          <div class="cyl-cell-wrap">
+            <span class="cyl-code">${esc(item.cylinder_number)}</span>
+            ${getOwnershipBadgeHtml(item.ownership)}
+          </div>
           <span class="badge ${esc(locClass)}">${esc(item.location)}</span>
         </div>
         <div class="cyl-card-title">${esc(item.gas_type)} ${item.capacity ? `• ${esc(item.capacity)}` : ""}</div>
@@ -501,6 +530,7 @@ function openCylinderModal(item) {
       document.getElementById("modalTitle").textContent = "Edit Tabung Gas";
       document.getElementById("cylinderId").value = item.id;
       document.getElementById("cylinder_number").value = item.cylinder_number || "";
+      document.getElementById("ownership").value = normalizeOwnership(item.ownership);
       document.getElementById("gas_type").value = item.gas_type || "Oxygen (O2)";
       document.getElementById("capacity").value = item.capacity || "";
       document.getElementById("status").value = item.status || "Isian";
@@ -514,6 +544,7 @@ function openCylinderModal(item) {
       document.getElementById("modalTitle").textContent = "Tambah Tabung Gas";
       document.getElementById("cylinderForm").reset();
       document.getElementById("cylinderId").value = "";
+      document.getElementById("ownership").value = "ASET";
       document.getElementById("location").value = "Di Gudang";
     }
     syncClientStationFieldVisibility();
@@ -550,6 +581,7 @@ function deleteCylinderById(id) {
 function exportCsv() {
   const headers = [
     "cylinder_number",
+    "ownership",
     "gas_type",
     "capacity",
     "status",
@@ -572,6 +604,7 @@ function exportCsv() {
   allCylinders.forEach(item => {
     const rowObj = {
       ...item,
+      ownership: normalizeOwnership(item.ownership),
       client_or_station: isWarehouseLocation(item.location) ? "" : item.client_or_station
     };
     lines.push(headers.map(h => escapeCell(rowObj[h])).join(","));
@@ -702,6 +735,7 @@ document.getElementById("cylinderForm").addEventListener("submit", async (e) => 
   const record = {
     id: idVal ? Number(idVal) : 0,
     cylinder_number: cylNum,
+    ownership: normalizeOwnership(document.getElementById("ownership").value),
     gas_type: gasType,
     capacity: document.getElementById("capacity").value.trim(),
     status: document.getElementById("status").value,
@@ -807,6 +841,7 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
         const locVal = getCol(r, "location", "Di Gudang") || "Di Gudang";
         parsedRecords.push({
           cylinder_number,
+          ownership: normalizeOwnership(getCol(r, "ownership", "ASET")),
           gas_type,
           capacity: getCol(r, "capacity", ""),
           status: getCol(r, "status", "Isian") || "Isian",
@@ -840,12 +875,14 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
 });
 
 document.getElementById("searchInput").addEventListener("input", renderView);
+document.getElementById("ownershipFilter").addEventListener("change", renderView);
 document.getElementById("locationFilter").addEventListener("change", renderView);
 document.getElementById("gasFilter").addEventListener("change", renderView);
 document.getElementById("statusFilter").addEventListener("change", renderView);
 
 document.getElementById("resetFiltersBtn").addEventListener("click", () => {
   document.getElementById("searchInput").value = "";
+  document.getElementById("ownershipFilter").value = "";
   document.getElementById("locationFilter").value = "";
   document.getElementById("gasFilter").value = "";
   document.getElementById("statusFilter").value = "";
